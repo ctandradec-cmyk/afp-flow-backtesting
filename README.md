@@ -1,48 +1,87 @@
-# AFP Flow Backtesting
+# Backtest de flujos AFP en renta variable local
 
-This repository contains the Python implementation of the backtesting
-methodology developed to evaluate potential flow estimates of Chilean
-pension funds (AFPs) in local equities.
+Evaluación histórica del supuesto con que hoy se proyectan los flujos de las AFP en
+acciones chilenas: **cada AFP tiende a replicar la cartera del sistema**, por lo que
+cerraría en el mes siguiente su diferencia (GAP) respecto al peso promedio del sistema.
 
-## Objective
+El backtest reconstruye, para cada mes, el flujo que habría proyectado ese supuesto
+y lo compara con el flujo efectivamente observado al mes siguiente.
 
-The objective of the backtesting framework is to assess the historical
-performance of a proxy based on portfolio-weight deviations between
-individual pension fund administrators and the AFP system.
+## Metodología
 
-## Methodology
+Para cada AFP $a$, acción $i$ y mes $t$:
 
-For each security and AFP, the methodology compares the portfolio weight
-of the individual administrator with a historical system-level reference.
+| Concepto | Definición |
+|---|---|
+| Cartera accionaria | $RVL_{a,t} = \sum_i Monto_{a,i,t}$ |
+| Peso AFP | $PesoAFP_{a,i,t} = Monto_{a,i,t} / RVL_{a,t}$ |
+| Peso sistema | $PesoSistema_{i,t} = MontoSistema_{i,t} / \sum_j MontoSistema_{j,t}$ |
+| Benchmark | Promedio de $PesoSistema_{i}$ en los 6 meses anteriores |
+| GAP | $GAP_{a,i,t} = PesoAFP_{a,i,t} - Benchmark_{i,t}$ |
+| Flujo proyectado | $-GAP_{a,i,t} \cdot RVL_{a,t}$ (positivo = compra) |
+| Flujo observado | $Monto_{a,i,t+1} - Monto_{a,i,t}$ |
 
-The reference is constructed using a six-month historical window.
+Se evalúan las observaciones con movimiento efectivo (flujo observado distinto de cero).
 
-The resulting signal is evaluated against subsequently observed portfolio
-movements.
+**KPI principal: MAE relativo**, el MAE del modelo dividido por el MAE del escenario
+sin cambio (asumir que cada AFP mantiene su posición). Bajo 1 el modelo mejora la
+estimación; sobre 1 la empeora.
 
-## Performance Metrics
+Métricas complementarias: MAE en MM CLP, error como % de la cartera accionaria y de la
+posición, relación proporcional, acierto direccional frente a la clase mayoritaria,
+correlación, análisis por quintiles de GAP y cierre del GAP por tramo.
 
-The backtesting considers metrics such as:
+## Datos
 
-- Mean Absolute Error (MAE)
-- Relative MAE
-- Directional accuracy
-- Error relative to the portfolio position
+Carteras publicadas por la Superintendencia de Pensiones:
 
-## Repository Structure
+```
+data/
+├── Agregadas.xlsx      # posición consolidada del sistema por acción (fondos A–E)
+└── Desagregadas.csv    # posición por AFP y acción (separador ';', formato numérico chileno)
+```
 
-`backtesting_afp.py`
+Columnas requeridas:
+- `Agregadas.xlsx`: `Fecha`, `Nemo`, `Total_MMQ`, `Precio`
+- `Desagregadas.csv`: `Fecha` (dd-mm-aaaa), `AFP`, `Nemo`, `Monto`
 
-Main Python implementation of the backtesting methodology.
+Los meses en que la SP publicó la cartera desagregada sin montos se excluyen
+automáticamente de la evaluación.
 
-## Data Availability
+## Uso
 
-The original datasets used in the analysis are not included in this
-repository due to confidentiality restrictions.
+```bash
+pip install -r requirements.txt
+python backtest_flujos_afp.py
+```
 
-The repository therefore contains the computational methodology but not
-the proprietary input data.
+Con rutas distintas:
 
-## Academic Context
+```bash
+python backtest_flujos_afp.py --agregadas ruta/Agregadas.xlsx --desagregadas ruta/Desagregadas.csv --out resultados
+```
 
-This code was developed as part of an academic internship project in 2026.
+## Salidas
+
+```
+outputs/
+├── grafico1_mae_vs_flujo_real.png    # MAE del modelo vs flujo observado promedio
+├── grafico2_quintiles.png            # flujo proyectado vs observado por quintil de GAP
+├── grafico3_boxplot_error_pct.png    # distribución del error como % de la cartera, por AFP
+└── resultados_backtest.xlsx          # validaciones, métricas, tablas y detalle por observación
+```
+
+## Tipografía
+
+Los gráficos usan [Montserrat](https://github.com/JulietaUla/Montserrat) (licencia OFL).
+Para replicarlos exactamente, descarga los archivos `.ttf` en la carpeta `fonts/`
+(o instálala en el sistema). Si no está disponible, el script usa DejaVu Sans.
+
+## Limitaciones
+
+- El benchmark usa el promedio histórico de 6 meses del sistema como proxy de la
+  referencia de mercado, ya que los pesos históricos del índice de referencia oficial
+  no están disponibles.
+- El flujo observado es la variación del monto invertido e incluye efecto precio.
+- La cartera desagregada se publica con aproximadamente 5 meses de rezago; el backtest
+  evalúa el supuesto con información del mismo mes, que corresponde al mejor caso posible.
