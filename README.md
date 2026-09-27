@@ -1,11 +1,8 @@
 # Backtest de flujos AFP en renta variable local
 
-Evaluación histórica del supuesto con que hoy se proyectan los flujos de las AFP en
-acciones chilenas: **cada AFP tiende a replicar la cartera del sistema**, por lo que
-cerraría en el mes siguiente su diferencia (GAP) respecto al peso promedio del sistema.
+Evaluación histórica de un supuesto de convergencia utilizado como proxy para analizar potenciales flujos de las AFP en acciones chilenas: **cada AFP tendería a converger hacia la cartera del sistema**, por lo que una diferencia (GAP) respecto al peso promedio histórico del sistema puede interpretarse como una señal potencial de compra o venta.
 
-El backtest reconstruye, para cada mes, el flujo que habría proyectado ese supuesto
-y lo compara con el flujo efectivamente observado al mes siguiente.
+El backtest reconstruye, para cada mes, el flujo que habría proyectado este supuesto y lo compara con el flujo efectivamente observado al mes siguiente.
 
 ## Metodología
 
