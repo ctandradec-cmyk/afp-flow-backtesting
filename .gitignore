@@ -1,5 +1,16 @@
 # Datos utilizados en el backtesting
 data/
+01_raw/
+02_processed/
+Maestro_Bloomberg_AFP.xlsx
+descarga_bloomberg_AFP_1.xlsx
+Pesos INFOCES*.xlsx
+Pesos históricos IPSA*.xlsx
+Precios históricos acciones*.csv
+
+# Documentos personales y de la pasantía
+05_bitacora/
+03_normativa/Fondos_Generacionales.pdf
 
 # Resultados generados
 outputs/
